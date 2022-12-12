@@ -170,6 +170,23 @@ class ProxyFetcher_jiangxianli(ProxyFetcher):
         self.the_url = self.url + next_url
 
 
+class ProxyFetcher_89(ProxyFetcher):
+    def parse(self):
+        global queue
+        trs = self.xmlParse.xpath("//table[@class='layui-table']/tbody/tr")
+        for item in trs:
+            ip = item.xpath("./td[1]/text()")[0].strip()
+            port = item.xpath("./td[2]/text()")[0].strip()
+            loation = item.xpath("./td[3]/text()")[0].strip()
+            porxy = Proxy(ip=ip, port=port, loation=loation, name=self.name)
+            queue.put(porxy)
+    def next(self):
+        next_url = self.xmlParse.xpath('//a[@class="layui-laypage-next"]/@href')[0]
+        self.the_url = self.url + next_url
+
+
+
+
 
 class SampleCheck(threading.Thread):
     def __init__(self,hashTableName=None):
@@ -244,6 +261,6 @@ class Check_Aysncio(threading.Thread):
 
 
 if __name__ == "__main__":
-    the_fetcher=ProxyFetcher_jiangxianli(name="jiangxianli",start_url="https://ip.jiangxianli.com/blog.html?page=1")
+    the_fetcher=ProxyFetcher_89(name="89代理",start_url="https://www.89ip.cn/")
     the_fetcher.start()
 
