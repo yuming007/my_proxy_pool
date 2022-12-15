@@ -34,3 +34,12 @@ class RedisClient:
         """
         data=self.__conn.hset(self.hashTableName,key,value)
         return data
+
+
+    def delete(self,key):
+        data=self.__conn.hdel(self.hashTableName,key)
+        return data
+
+
+    def getAll(self):
+        return self.__conn.hkeys(self.hashTableName)

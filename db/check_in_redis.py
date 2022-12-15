@@ -8,7 +8,11 @@
 """
 import random
 
+import requests
 from aiohttp import ClientConnectorSSLError
+from anyio import sleep
+
+from my_proxy_pool.db.redisClient import RedisClient
 
 """再次  检查redis里的代理是否可用"""
 
@@ -67,9 +71,38 @@ class testUseful(threading.Thread):
 
 
 
-t=testUseful()
-t.start()
+class SampleCheck(threading.Thread):
+    def __init__(self,hashTableName=None):
+        super().__init__()
+        self.HEADER = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:34.0) Gecko/20100101 Firefox/34.0',
+                       'Accept': '*/*',
+                       'Connection': 'keep-alive',
+                       'Accept-Language': 'zh-CN,zh;q=0.8'}
+        self.hashTableName=hashTableName
+    """检测代理是否可用"""
+    def run(self):
+        redisCilent = RedisClient(host="127.0.0.1", port=6379, db=0, hashTableName=self.hashTableName)
+        while True:
+            all =redisCilent.getAll()
+            if not all:
+                break
+            one = random.choice(all).decode("utf-8")
+            proxy=one
+            proxies = {"https": "https://{proxy}".format(proxy=proxy)}
+            try:
+                resp=requests.get(url="http://www.baidu.com",headers=self.HEADER,proxies=proxies,timeout=4)
+                flag=True if resp.status_code==200 else False
+            except Exception as e:
+                flag=False
+            if not flag:
+                print("fail:",proxy)
+                data=redisCilent.delete(proxy)
+                print(data)
+            sleep(1)
 
+
+for t in [SampleCheck(hashTableName="my_proxy_pool") for _ in range(3)]:
+    t.start()
 
 
 
